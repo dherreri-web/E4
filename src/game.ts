@@ -132,7 +132,7 @@ export class GameScene extends Phaser.Scene implements Arena {
         fontSize: "64px",
         fontStyle: "bold",
         align: "center",
-        color: "#e8fdff",
+        color: "var(--title-text-color)",
       }).setOrigin(0.5).setLineSpacing(-6);
       title.enableFilters();
       title.filters?.internal.addGlow(0x5ef2ff, 6, 0, 1);
@@ -148,12 +148,12 @@ export class GameScene extends Phaser.Scene implements Arena {
       this.add.text(WIDTH / 2, HEIGHT * 0.62, "SPACE  launch", {
         fontFamily: "monospace",
         fontSize: "20px",
-        color: "#ffe066",
+        color: "var(yellow-text-color)",
       }).setOrigin(0.5);
       this.countdown = this.add.text(WIDTH / 2, HEIGHT * 0.68, "", {
         fontFamily: "monospace",
         fontSize: "14px",
-        color: "#8aa4c8",
+        color: "var(yellow-text-color)",
       }).setOrigin(0.5);
 
       this.cameras.main.fadeIn(400, 4, 2, 12);

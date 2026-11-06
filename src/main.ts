@@ -30,7 +30,7 @@ new Phaser.Game({
   parent: "game",
   width: WIDTH,
   height: HEIGHT,
-  backgroundColor: "#04020c",
+  backgroundColor: "var(--background-color)",
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [new GameScene(hud, options)],
 });
