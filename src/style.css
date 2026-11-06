@@ -4,7 +4,7 @@
   --background-color: #04020c;
   --panel-color: #0e0a22;
   --title-text-color: #e8fdff;
-  --yellow-text-color: #ffe066;
+  --yellow-color: #ffe066;
   --cyan-color: #5ef2ff;
   --muted-text-color: #6f86a8;
   --danger-color: #ff4d6d;
@@ -104,7 +104,7 @@ output {
 
 #best {
   font-size: 15px;
-  color: var(--yellow-text-color);
+  color: var(--yellow-color);
 }
 
 .pips,
@@ -126,7 +126,7 @@ output {
 }
 
 .cell {
-  color: var(--yellow-text-color);
+  color: var(--yellow-color);
 }
 
 .pip.lit,
@@ -143,9 +143,9 @@ output {
   display: none;
   margin: 0;
   padding: 4px 8px;
-  border: 1px solid var(--yellow-text-color);
+  border: 1px solid var(--yellow-color);
   border-radius: var(--radius);
-  color: var(--yellow-text-color);
+  color: var(--yellow-color);
   text-align: center;
   font: 600 11px/1.4 var(--other-fonts);
   letter-spacing: 0.2em;
@@ -200,7 +200,7 @@ output {
 }
 
 .stop[data-state="current"] {
-  color: var(--yellow-text-color);
+  color: var(--yellow-color);
   text-shadow: var(--glow);
 }
 
@@ -263,7 +263,7 @@ output {
 .banner strong {
   font: 700 26px/1.1 var(--other-fonts);
   letter-spacing: 0.12em;
-  color: var(--yellow-text-color);
+  color: var(--yellow-color);
   text-shadow: var(--glow);
 }
 
