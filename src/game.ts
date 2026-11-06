@@ -29,6 +29,7 @@ const STORY: [number, string][] = [
   [4.2, "Behind you, five sectors of open sky."],
   [7.6, "Ahead, the long way home."],
 ];
+
 const WARP_AT = 9;
 const CREDITS_AT = 11;
 const RETURN_AT = 18;
