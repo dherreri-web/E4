@@ -504,12 +504,6 @@ export class GameScene extends Phaser.Scene implements Arena {
         x,
         y,
         "drone",
-        2,
-        100,
-        13,
-        0.015,
-        true,
-        false,
         x,
         x < WIDTH / 2 ? 1 : -1,
       ),
@@ -594,37 +588,6 @@ export class GameScene extends Phaser.Scene implements Arena {
   }
 
   private spawnWave(wave: Wave, tick: number): void {
-    const stats = {
-      drone: {
-        health: 2,
-        speed: 100,
-        radius: 13,
-        dropChance: 0.015,
-        drops: true,
-      },
-      dart: {
-        health: 1,
-        speed: 150,
-        radius: 12,
-        dropChance: 0.015,
-        drops: false,
-      },
-      turret: {
-        health: 12,
-        speed: 400,
-        radius: 19,
-        dropChance: 0.3,
-        drops: true,
-      },
-      lancer: {
-        health: 4,
-        speed: 250,
-        radius: 15,
-        dropChance: 0.06,
-        drops: true,
-      },
-    }[wave.kind];
-
     for (let i = 0; i < wave.count; i++) {
       if (wave.at(i) !== tick) continue;
 
@@ -634,12 +597,6 @@ export class GameScene extends Phaser.Scene implements Arena {
         x,
         y,
         wave.kind,
-        stats.health,
-        stats.speed,
-        stats.radius,
-        stats.dropChance,
-        stats.drops,
-        false,
         x,
         i % 2 === 0 ? 1 : -1,
       );
