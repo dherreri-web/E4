@@ -157,7 +157,7 @@ function aim(from: { x: number; y: number }, arena: Arena): number {
   );
 }
 
-type EnemyBehavior = {
+interface EnemyBehavior {
   texture: string;
   hp: number;
   score: number;
@@ -165,7 +165,7 @@ type EnemyBehavior = {
   dropChance: number;
   move?: (enemy: Enemy, arena: Arena) => void;
   fire?: (enemy: Enemy, arena: Arena) => void;
-};
+}
 
 const ENEMY_KINDS: Record<EnemyKind, EnemyBehavior> = {
   drone: {

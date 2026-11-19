@@ -23,35 +23,33 @@ const TICK_MS = 1000 / 60;
 const START_LIVES = 3;
 const BOSS_WARNING_TICKS = 200;
 const VICTORY_TICKS = 180;
-
-/** Totals the run reports to the HUD and the closing cutscene. */
-export type Run = {
+export interface Run {
   score: number;
   lives: number;
   kills: number;
   hits: number;
   continues: number;
   bossDefeated?: boolean;
-};
+}
 
 /** The play scene serves both the player and the self-play demo. */
 export type PlayData = { selfPlay?: boolean };
 
-type Wave = {
+interface Wave {
   kind: EnemyKind;
   count: number;
   at: (index: number) => number;
   position: (index: number) => { x: number; y: number };
-};
+}
 
-type Sector = {
+interface Sector {
   name: string;
   subtitle: string;
   /** Tick at which the sector may advance if its enemies are cleared. */
   length: number;
   waves: Wave[];
   boss?: boolean;
-};
+}
 
 const wave = (
   kind: EnemyKind,
