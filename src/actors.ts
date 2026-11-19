@@ -147,3 +147,321 @@ export class Player extends Actor {
     super.destroy(fromScene);
   }
 }
+
+export type EnemyKind = "drone" | "dart" | "turret" | "lancer";
+
+function aim(from: { x: number; y: number }, arena: Arena): number {
+  return Math.atan2(
+    arena.player.y - from.y,
+    arena.player.x - from.x,
+  );
+}
+
+type EnemyBehavior = {
+  texture: string;
+  hp: number;
+  score: number;
+  radius: number;
+  dropChance: number;
+  move?: (enemy: Enemy, arena: Arena) => void;
+  fire?: (enemy: Enemy, arena: Arena) => void;
+};
+
+const ENEMY_KINDS: Record<EnemyKind, EnemyBehavior> = {
+  drone: {
+    texture: "drone",
+    hp: 2,
+    score: 100,
+    radius: 13,
+    dropChance: 0.015,
+    move: (enemy) => {
+      enemy.y += 1.5;
+      enemy.x = enemy.homeX +
+        Math.sin(enemy.age * 0.045) * 46 * enemy.side;
+    },
+    fire: (enemy, arena) => {
+      if (enemy.age % 100 !== 60 || !arena.rng.chance(0.35)) return;
+      arena.fire(enemy.x, enemy.y, aim(enemy, arena), 2.4);
+    },
+  },
+
+  dart: {
+    texture: "dart",
+    hp: 3,
+    score: 150,
+    radius: 12,
+    dropChance: 0.025,
+    move: (enemy, arena) => {
+      // Drift in slowly, then commit to a dive toward where the player was.
+      if (enemy.age < 50) {
+        enemy.y += 1.2;
+      } else {
+        if (enemy.age === 50) {
+          enemy.heading = Math.sign(arena.player.x - enemy.x) * 1.4;
+        }
+        enemy.y += 5.2;
+        enemy.x += enemy.heading;
+      }
+    },
+  },
+
+  turret: {
+    texture: "turret",
+    hp: 5,
+    score: 250,
+    radius: 17,
+    dropChance: 0.08,
+    move: (enemy) => {
+      if (enemy.age < 70) enemy.y += 1.6;
+      else if (enemy.age > 420) enemy.y += 1.2;
+      enemy.rotation += 0.02;
+    },
+    fire: (enemy, arena) => {
+      const t = enemy.age - 80;
+      if (
+        t < 0 ||
+        enemy.age > 420 ||
+        t % 100 > 40 ||
+        t % 8 !== 0
+      ) return;
+      arena.fire(enemy.x, enemy.y, aim(enemy, arena), 3.4);
+    },
+  },
+
+  lancer: {
+    texture: "lancer",
+    hp: 3,
+    score: 200,
+    radius: 14,
+    dropChance: 0.04,
+    move: (enemy) => {
+      enemy.x += 2.4 * enemy.side;
+      enemy.y += 0.35;
+    },
+    fire: (enemy, arena) => {
+      if (
+        enemy.age % 40 !== 20 ||
+        enemy.x < 20 ||
+        enemy.x > WIDTH - 20
+      ) return;
+
+      for (const spread of [-0.25, 0, 0.25]) {
+        arena.fire(
+          enemy.x,
+          enemy.y + 8,
+          Math.PI / 2 + spread,
+          2.6,
+        );
+      }
+    },
+  },
+};
+
+const BOSS_BEHAVIOR: EnemyBehavior = {
+  texture: "boss",
+  hp: 900,
+  score: 10000,
+  radius: 46,
+  dropChance: 0,
+};
+
+export class Enemy extends Actor {
+  readonly maxHp: number;
+  readonly score: number;
+  readonly dropChance: number;
+  readonly homeX: number;
+  readonly side: number;
+
+  hp: number;
+  flash = 0;
+  heading = 0;
+  spin = 0;
+
+  private readonly behavior: EnemyBehavior;
+
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    readonly kind: EnemyKind | "boss",
+    homeX: number,
+    side: number,
+  ) {
+    const behavior = kind === "boss" ? BOSS_BEHAVIOR : ENEMY_KINDS[kind];
+
+    super(scene, x, y, behavior.texture, behavior.radius);
+
+    this.behavior = behavior;
+    this.hp = behavior.hp;
+    this.maxHp = behavior.hp;
+    this.score = behavior.score;
+    this.dropChance = behavior.dropChance;
+    this.homeX = homeX;
+    this.side = side;
+  }
+
+  step(
+    arena: Arena,
+    move = true,
+    shoot = true,
+  ): void {
+    this.age++;
+    const { x, y } = this;
+
+    if (move) this.behavior.move?.(this, arena);
+
+    this.vx = this.x - x;
+    this.vy = this.y - y;
+
+    if (shoot) this.behavior.fire?.(this, arena);
+
+    this.flash = Math.max(0, this.flash - 1);
+    if (this.flash > 0) {
+      this.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+    } else {
+      this.clearTint();
+    }
+  }
+
+  get fraction(): number {
+    return this.hp / this.maxHp;
+  }
+
+  takeDamage(amount: number): boolean {
+    this.hp -= amount;
+    this.flash = 3;
+    return this.hp <= 0;
+  }
+}
+
+export class Boss extends Enemy {
+  readonly core: Phaser.GameObjects.Image;
+
+  constructor(scene: Phaser.Scene) {
+    super(scene, WIDTH / 2, -90, "boss", WIDTH / 2, 1);
+
+    this.core = scene.add.image(this.x, this.y, "boss-core").setBlendMode(
+      Phaser.BlendModes.ADD,
+    );
+  }
+
+  override get fraction(): number {
+    return this.hp / this.maxHp;
+  }
+
+  phase(): number {
+    return this.fraction > 2 / 3 ? 1 : this.fraction > 1 / 3 ? 2 : 3;
+  }
+
+  get arrived(): boolean {
+    return this.age > 150;
+  }
+
+  override takeDamage(amount: number): boolean {
+    return this.arrived ? super.takeDamage(amount) : false;
+  }
+
+  override step(arena: Arena): void {
+    // Preserve the original order: calculate velocity before the boss sways.
+    super.step(arena, false, false);
+
+    if (!this.arrived) {
+      this.y += 1.4;
+    } else {
+      const sway = this.phase() === 3 ? 0.012 : 0.008;
+      this.x = WIDTH / 2 + Math.sin((this.age - 150) * sway) * 140;
+      this.attack(arena, this.age - 150);
+    }
+
+    this.core.setPosition(this.x, this.y + 6);
+    this.core.setScale(
+      1 + 0.15 * Math.sin(this.age * (0.08 * this.phase())),
+    );
+  }
+
+  private attack(arena: Arena, t: number): void {
+    if (this.phase() === 1 && t % 55 === 0) {
+      this.fan(arena, 9, 1.1, 2.8);
+    }
+
+    if (this.phase() === 2) {
+      if (t % 80 === 0) this.fan(arena, 9, 1.2, 3);
+
+      if (t % 80 === 40) {
+        for (const d of [-0.12, 0, 0.12]) {
+          arena.fire(
+            this.x,
+            this.y + 30,
+            aim(this, arena) + d,
+            4.2,
+            true,
+          );
+        }
+      }
+
+      if (t % 360 === 180) {
+        arena.summon("drone", this.x - 70, this.y);
+        arena.summon("drone", this.x + 70, this.y);
+      }
+    }
+
+    if (this.phase() === 3 && t % 6 === 0) {
+      this.spin += 0.23;
+
+      for (let arm = 0; arm < 4; arm++) {
+        arena.fire(
+          this.x,
+          this.y + 6,
+          this.spin + (arm * Math.PI) / 2,
+          2.6,
+        );
+      }
+
+      if (t % 48 === 0) {
+        arena.fire(
+          this.x,
+          this.y + 30,
+          aim(this, arena),
+          4.6,
+          true,
+        );
+      }
+    }
+  }
+
+  private fan(
+    arena: Arena,
+    count: number,
+    width: number,
+    speed: number,
+  ): void {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.PI / 2 +
+        (i / (count - 1) - 0.5) * width;
+      arena.fire(this.x, this.y + 40, angle, speed);
+    }
+  }
+
+  override destroy(fromScene?: boolean): void {
+    this.core.destroy(fromScene);
+    super.destroy(fromScene);
+  }
+}
+
+export class PowerUp extends Actor {
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    readonly kind: string,
+  ) {
+    super(scene, x, y, kind, 14);
+  }
+
+  step(): void {
+    this.age++;
+    this.y += 1.1;
+    this.rotation += 0.04;
+    this.setScale(1 + 0.12 * Math.sin(this.age * 0.15));
+  }
+}
